@@ -103,7 +103,7 @@ function generate_salmon(atoms::Atoms, filename)
         @printf(f, "/\n\n")
 
         # pseudo
-        nelec = 0 # number of electrons
+        zions = Array{Int64, 1}()
         @printf(f, "&pseudo\n")
         for (index, name) in enumerate(names)
             filename_psp = pseudo_files[index]
@@ -112,7 +112,7 @@ function generate_salmon(atoms::Atoms, filename)
                 for (index_line, line) in enumerate(eachline(f_psp))
                     if index_line == 2
                         zatom, zion = parse.(Float64, split(line)[1:2])
-                        nelec += zion
+                        push!(zions, zion)
                         @printf(f, "  izatom(%d) = %d\n", index, zatom)
                     elseif index_line == 3
                         lmax, lloc = parse.(Int64, split(line)[3:4])
@@ -126,10 +126,11 @@ function generate_salmon(atoms::Atoms, filename)
         @printf(f, "/\n\n")
 
         # system
+        nelec = sum(zions[atoms.atom_types])
         @printf(f, "&system\n")
         @printf(f, "  iperiodic = 0\n")
         @printf(f, "  al = % .4e, % .4e, % .4e\n", atoms.acell[1][1], atoms.acell[2][2], atoms.acell[3][3])
-        @printf(f, "  nstate = %d\n", nelec)
+        @printf(f, "  nstate = %d\n", nelec/2)
         @printf(f, "  nelem = %d\n", length(atoms.names))
         @printf(f, "  natom = %d\n", atoms.natom)
         @printf(f, "  nelec = %d\n", nelec)
